@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="前后端分离的安全计算器，支持复合表达式、科学函数与持久化历史记录。"
+    />
+    <title>Prism Calc · 分离式计算器</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#calculator" aria-label="Prism Calc 首页">
+          <span class="brand-mark" aria-hidden="true">P</span>
+          <span>
+            <strong>Prism Calc</strong>
+            <small>server-side calculator</small>
+          </span>
+        </a>
+        <div class="topbar-actions">
+          <span class="connection" id="connectionStatus" role="status">
+            <span class="connection-dot"></span>
+            正在连接后端
+          </span>
+          <button class="icon-button" id="themeToggle" type="button" aria-label="切换主题">
+            <span aria-hidden="true">☼</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="workspace" id="calculator">
+        <article class="calculator-card" aria-label="Calculator">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">CALCULATOR</p>
+            </div>
+            <button class="text-button" id="copyResult" type="button">复制结果</button>
+          </div>
+
+          <div class="display-panel">
+            <label for="expression">数学表达式</label>
+            <div class="expression-row">
+              <input
+                id="expression"
+                name="expression"
+                type="text"
+                inputmode="text"
+                autocomplete="off"
+                spellcheck="false"
+                maxlength="200"
+                placeholder="例如：(12.5 + 7.5) × 3"
+                aria-describedby="expressionHint"
+              />
+              <button id="backspace" class="backspace" type="button" aria-label="删除最后一个字符">⌫</button>
+            </div>
+            <div class="result-row">
+              <span id="expressionHint">结果由后端安全解析并计算</span>
+              <output id="result" aria-live="polite">0</output>
+            </div>
+            <p class="message" id="message" role="alert" aria-live="assertive"></p>
+          </div>
+
+          <div class="scientific-strip" aria-label="科学计算">
+            <button type="button" data-value="sin(">sin</button>
+            <button type="button" data-value="cos(">cos</button>
+            <button type="button" data-value="tan(">tan</button>
+            <button type="button" data-value="sqrt(">√</button>
+            <button type="button" data-value="log(">log</button>
+            <button type="button" data-value="ln(">ln</button>
+            <button type="button" data-value="pi">π</button>
+            <button type="button" data-value="e">e</button>
+          </div>
+
+          <div class="keypad" aria-label="计算器按键">
+            <button class="key key-muted" type="button" data-action="clear">AC</button>
+            <button class="key key-muted" type="button" data-value="(">(</button>
+            <button class="key key-muted" type="button" data-value=")">)</button>
+            <button class="key key-operator" type="button" data-value="/">÷</button>
+
+            <button class="key" type="button" data-value="7">7</button>
+            <button class="key" type="button" data-value="8">8</button>
+            <button class="key" type="button" data-value="9">9</button>
+            <button class="key key-operator" type="button" data-value="*">×</button>
+
+            <button class="key" type="button" data-value="4">4</button>
+            <button class="key" type="button" data-value="5">5</button>
+            <button class="key" type="button" data-value="6">6</button>
+            <button class="key key-operator" type="button" data-value="-">−</button>
+
+            <button class="key" type="button" data-value="1">1</button>
+            <button class="key" type="button" data-value="2">2</button>
+            <button class="key" type="button" data-value="3">3</button>
+            <button class="key key-operator" type="button" data-value="+">+</button>
+
+            <button class="key key-muted" type="button" data-value="%">%</button>
+            <button class="key" type="button" data-value="0">0</button>
+            <button class="key" type="button" data-value=".">.</button>
+            <button class="key key-equals" id="calculate" type="button">=</button>
+          </div>
+          <p class="keyboard-tip">按 Enter 计算 · Esc 清空 · 支持键盘直接输入</p>
+        </article>
+
+        <aside class="history-card" aria-labelledby="historyTitle">
+          <div class="section-heading history-heading">
+            <div>
+              <p class="eyebrow">HISTORY</p>
+              <h2 id="historyTitle">计算历史</h2>
+            </div>
+            <button class="text-button danger" id="clearHistory" type="button">清空全部</button>
+          </div>
+
+          <div class="stats" aria-label="计算统计">
+            <div>
+              <span>累计计算</span>
+              <strong id="totalCalculations">0</strong>
+            </div>
+            <div>
+              <span>数据来源</span>
+              <strong>SQLite</strong>
+            </div>
+          </div>
+
+          <label class="search-box" for="historySearch">
+            <span aria-hidden="true">⌕</span>
+            <input id="historySearch" type="search" placeholder="搜索表达式或结果" />
+          </label>
+
+          <div class="history-list" id="historyList" aria-live="polite">
+            <div class="empty-state">
+              <span aria-hidden="true">∿</span>
+              <strong>还没有计算记录</strong>
+              <p>完成一次计算后，记录会持久保存在后端数据库。</p>
+            </div>
+          </div>
+
+          <nav class="pagination" aria-label="历史记录分页">
+            <button id="previousPage" type="button" disabled>上一页</button>
+            <span id="pageStatus">第 1 / 1 页</span>
+            <button id="nextPage" type="button" disabled>下一页</button>
+          </nav>
+        </aside>
+      </section>
+
+      <footer>
+        <span>Prism Calc / v1.0</span>
+        <span>所有核心计算均在服务端完成</span>
+      </footer>
+    </main>
+
+    <dialog id="clearDialog">
+      <form method="dialog">
+        <span class="dialog-icon" aria-hidden="true">!</span>
+        <h2>清空所有历史？</h2>
+        <p>该操作会通过后端 API 永久删除数据库中的所有计算记录。</p>
+        <div class="dialog-actions">
+          <button value="cancel" class="secondary-button">取消</button>
+          <button value="confirm" class="danger-button">确认清空</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./config.js"></script>
+    <script src="./app.js" defer></script>
+  </body>
+</html>
